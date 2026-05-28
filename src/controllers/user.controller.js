@@ -165,8 +165,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -187,10 +187,9 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
-  if (incomingRefreshToken) {
+  if (!incomingRefreshToken) {
     throw new ApiError(401, "Unauthorized request");
   }
 
@@ -215,17 +214,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: true,
     };
 
-    const { accessToken, newRefreshToken } =
+    const { accessToken, refreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
     res
       .status(200)
       .cookie("accessToken", accessToken)
-      .cookie("refreshToken", newRefreshToken)
+      .cookie("refreshToken", refreshToken)
       .json(
         new ApiResponse(
           200,
-          { accessToken, newRefreshToken },
+          { accessToken, refreshToken },
           "Access token refreshed succussfull"
         )
       );
@@ -470,4 +469,6 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getChannelProfile,
+  updateAccountDetails,
+  getWatchHistory
 };
